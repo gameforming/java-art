@@ -1,341 +1,429 @@
-
-<!DOCTYPE html>
-<html lang="en">
+ <!DOCTYPE html>
+<html lang="nl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#11111b">
-<title>Java's Art Gen</title>
+<title>Java's Art Gen V3</title>
 <style>
-:root {
-  color-scheme: dark;
-  --bg:#101018;--panel:#191925;--panel-2:#222232;
-  --text:#f4f1ff;--muted:#a5a1b8;
-  --accent:#a78bfa;--border:#343348;
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  padding: 25px 15px;
+  background: #100d1c;
+  color: #f4efff;
+  font-family: Arial, sans-serif;
 }
-*{box-sizing:border-box}
-body{
-  margin:0;min-height:100vh;padding:32px 18px 56px;
-  background:radial-gradient(ellipse at top,#282044 0,var(--bg) 48%);
-  color:var(--text);font:15px/1.5 system-ui,sans-serif
+main {
+  max-width: 1050px;
+  margin: auto;
 }
-.wrap{width:min(1080px,100%);margin:auto}
-header{text-align:center;margin:10px 0 30px}
-.eyebrow{color:#c4b5fd;text-transform:uppercase;letter-spacing:.2em;font-size:11px;font-weight:800}
-h1{margin:8px 0;font-size:clamp(34px,7vw,58px);line-height:1.05;letter-spacing:-.045em}
-h1 span{color:var(--accent)}
-header p{color:var(--muted);margin:12px auto 0;max-width:570px}
-.layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px;align-items:start}
-.panel{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:20px;box-shadow:0 18px 55px #0003}
-h2{font-size:16px;margin:0 0 16px}
-.drop{display:grid;place-items:center;text-align:center;min-height:180px;border:1.5px dashed #625987;border-radius:15px;background:#211d31;padding:18px;cursor:pointer}
-.drop:hover,.drop.drag{border-color:var(--accent);background:#2a2340}
-.drop .emoji{font-size:34px}
-.drop strong{display:block;margin:8px 0 3px}
-.drop small{color:var(--muted)}
-input[type=file]{display:none}
-.field{margin-top:20px}
-.field-head{display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-weight:650}
-.value{color:#c4b5fd;font-variant-numeric:tabular-nums}
-input[type=range]{width:100%;accent-color:var(--accent);cursor:pointer}
-.hint{color:var(--muted);font-size:12px;margin-top:5px}
-select{width:100%;color:var(--text);background:var(--panel-2);border:1px solid var(--border);padding:11px 12px;border-radius:10px;font:inherit}
-.check{display:flex;gap:9px;align-items:center;margin-top:18px;color:var(--muted)}
-.check input{accent-color:var(--accent)}
-button{border:0;border-radius:11px;padding:12px 16px;font:700 14px system-ui;cursor:pointer;transition:.15s}
-button:hover{filter:brightness(1.1);transform:translateY(-1px)}
-.primary{width:100%;margin-top:22px;color:#171222;background:linear-gradient(110deg,#c4b5fd,#a78bfa)}
-.secondary{color:var(--text);background:var(--panel-2);border:1px solid var(--border)}
-button:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.right{display:grid;gap:18px}
-.preview-top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
-.preview-top h2{margin:0}
-.status{color:var(--muted);font-size:12px}
-.preview{min-height:310px;display:grid;place-items:center;margin-top:15px;padding:18px;border-radius:14px;border:1px solid var(--border);background-color:#14141e;overflow:auto}
-.placeholder{text-align:center;color:var(--muted);max-width:280px}
-.placeholder b{display:block;font-size:40px;margin-bottom:8px}
-#artPreview{display:grid;gap:0;width:max-content;max-width:100%;line-height:1;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif}
-.pixel{display:grid;place-items:center}
-.output{width:100%;min-height:190px;resize:vertical;color:#e9e4ff;background:#11111a;border:1px solid var(--border);border-radius:12px;padding:14px;font:13px/1.45 ui-monospace,monospace}
-.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}
-.actions button{flex:1;min-width:125px}
-.privacy{color:var(--muted);font-size:12px;text-align:center;margin-top:16px}
-.toast{min-height:20px;color:#86efac;font-size:12px;margin-top:8px}
-@media(max-width:780px){.layout{grid-template-columns:1fr}body{padding:22px 13px 40px}.panel{padding:17px}.preview{min-height:230px}}
+h1 {
+  text-align: center;
+  color: #c9a5ff;
+  margin-bottom: 8px;
+}
+.subtitle {
+  text-align: center;
+  color: #aaa0bd;
+  margin-bottom: 25px;
+}
+.panel {
+  background: #1d1830;
+  border: 1px solid #40345e;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 18px;
+}
+label {
+  display: block;
+  margin: 15px 0 7px;
+  font-weight: bold;
+}
+input, select, button {
+  font: inherit;
+}
+input[type="range"] { width: 100%; }
+input[type="file"], select {
+  width: 100%;
+  padding: 10px;
+  color: white;
+  background: #29213e;
+  border: 1px solid #51436f;
+  border-radius: 8px;
+}
+button {
+  border: 0;
+  border-radius: 9px;
+  padding: 12px 17px;
+  background: #9663df;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 7px 5px 0 0;
+}
+button:hover { background: #ad80ef; }
+button.secondary { background: #39304e; }
+#dropzone {
+  border: 2px dashed #705a98;
+  border-radius: 12px;
+  padding: 25px;
+  text-align: center;
+  color: #b9a8d8;
+  cursor: pointer;
+}
+#dropzone.drag {
+  background: #33264d;
+}
+.preview-wrap {
+  overflow: auto;
+  background: #fff;
+  color: #111;
+  border-radius: 10px;
+  padding: 12px;
+  max-height: 650px;
+}
+#preview {
+  font-family: "Noto Color Emoji", "Apple Color Emoji",
+    "Segoe UI Emoji", monospace;
+  font-size: 16px;
+  line-height: 1;
+  white-space: pre;
+  letter-spacing: 0;
+  width: max-content;
+  margin: 0;
+}
+#sourcePreview {
+  display: block;
+  max-width: 100%;
+  max-height: 250px;
+  margin: 15px auto 0;
+  border-radius: 8px;
+}
+.stats { color: #b9a8d8; font-size: 13px; }
 </style>
 </head>
 <body>
-<main class="wrap">
-<header>
-<div class="eyebrow">Turn pictures into tiny art</div>
-<h1><span>Java's</span> Art Gen</h1>
-<p>Upload a picture, choose your emoji canvas size and turn it into copy-and-paste pixel art. Your image stays on your device.</p>
-</header>
+<main>
+  <h1>🎨 Java's Art Gen V3</h1>
+  <p class="subtitle">Maak nette emoji pixel art van je afbeeldingen</p>
 
-<div class="layout">
-<section class="panel">
-<h2>🎨 Create your art</h2>
-<label class="drop" id="dropZone" for="imageInput">
-<span><span class="emoji">🖼️</span><strong>Drop an image here</strong><small>or click to browse · PNG, JPG, WEBP</small></span>
-</label>
-<input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+  <section class="panel">
+    <div id="dropzone">
+      <strong>Sleep hier je afbeelding naartoe</strong><br>
+      of klik om een bestand te kiezen
+      <input id="file" type="file" accept="image/*" hidden>
+    </div>
+    <img id="sourcePreview" hidden alt="Voorbeeld van de afbeelding">
+  </section>
 
-<div class="field">
-<div class="field-head"><label for="widthRange">Width</label><span class="value" id="widthValue">24</span></div>
-<input id="widthRange" type="range" min="8" max="64" value="24">
-<div class="hint">Number of emoji columns</div>
-</div>
+  <section class="panel">
+    <label for="width">Breedte: <span id="widthValue">32</span> pixels</label>
+    <input id="width" type="range" min="8" max="80" value="32">
 
-<div class="field">
-<div class="field-head"><label for="heightRange">Height</label><span class="value" id="heightValue">24</span></div>
-<input id="heightRange" type="range" min="8" max="64" value="24">
-<div class="hint">Number of emoji rows</div>
-</div>
+    <label for="height">Hoogte: <span id="heightValue">32</span> pixels</label>
+    <input id="height" type="range" min="8" max="80" value="32">
 
-<div class="field">
-<div class="field-head"><label for="palette">Emoji style</label></div>
-<select id="palette">
-<option value="color">Colorful emoji</option>
-<option value="simple">Simple symbols</option>
-<option value="nature">Nature</option>
-<option value="food">Food</option>
-</select>
-</div>
+    <label>
+      <input id="proportions" type="checkbox" checked>
+      Verhoudingen behouden
+    </label>
 
-<label class="check"><input type="checkbox" id="keepRatio" checked> Keep image proportions</label>
-<button class="primary" id="generateBtn" disabled>✨ Generate pixel art</button>
-<p class="privacy">🔒 100% local processing. Nothing is uploaded.</p>
-</section>
+    <label for="palette">Kleurenpalet</label>
+    <select id="palette">
+      <option value="full">Alle basiskleuren</option>
+      <option value="basic">Basis: zwart, wit en primaire kleuren</option>
+      <option value="warm">Warme kleuren</option>
+      <option value="cool">Koele kleuren</option>
+      <option value="mono">Zwart, grijs en wit</option>
+    </select>
 
-<div class="right">
-<section class="panel">
-<div class="preview-top"><h2>👀 Live preview</h2><span class="status" id="dimensions">24 × 24</span></div>
-<div class="preview">
-<div class="placeholder" id="placeholder"><b>🌟</b>Your emoji art will appear here.<br>Upload an image to get started.</div>
-<div id="artPreview" aria-label="Emoji pixel art preview" hidden></div>
-</div>
-</section>
+    <label for="smooth">Kleurvlakken gladstrijken</label>
+    <select id="smooth">
+      <option value="0">Uit</option>
+      <option value="1" selected>Licht</option>
+      <option value="2">Sterk</option>
+    </select>
 
-<section class="panel">
-<h2>📋 Your copyable art</h2>
-<textarea class="output" id="output" spellcheck="false" placeholder="Your emoji pixel art will appear here..." readonly></textarea>
-<div class="actions">
-<button class="primary" id="copyBtn" disabled>📋 Copy art</button>
-<button class="secondary" id="downloadBtn" disabled>⬇️ Save .txt</button>
-</div>
-<div class="toast" id="toast" role="status" aria-live="polite"></div>
-</section>
-</div>
-</div>
+    <button id="generate">Genereer pixel art</button>
+  </section>
+
+  <section class="panel">
+    <h2>Resultaat</h2>
+    <div class="preview-wrap">
+      <pre id="preview">Upload eerst een afbeelding...</pre>
+    </div>
+    <p id="stats" class="stats"></p>
+    <button id="copy">Kopieer emoji art</button>
+    <button id="download" class="secondary">Download .txt</button>
+  </section>
 </main>
 
-<canvas id="workCanvas" hidden></canvas>
 <script>
-(() => {
+const $ = id => document.getElementById(id);
+
+let image = null;
+let output = "";
+
 const palettes = {
-color:[
-['⬛','#151515'],['⚫','#444444'],['◾','#777777'],['⬜','#f5f5f5'],['⚪','#ffffff'],
-['🟥','#e53935'],['🔴','#ef5350'],['❤️','#c62828'],['🧡','#ef6c00'],
-['🟧','#fb8c00'],['🟠','#ff9800'],['🟨','#fdd835'],['💛','#fbc02d'],
-['🟩','#43a047'],['🟢','#4caf50'],['💚','#2e7d32'],['🩵','#80deea'],
-['🟦','#1e88e5'],['🔵','#2196f3'],['💙','#1565c0'],['🟪','#8e24aa'],
-['🟣','#9c27b0'],['💜','#6a1b9a'],['🩷','#f48fb1'],['💗','#ec407a'],
-['🟫','#795548'],['🤎','#5d4037'],['🩶','#9e9e9e']
-],
-simple:[
-['⬛','#111111'],['▪️','#555555'],['▫️','#aaaaaa'],['⬜','#f5f5f5'],
-['🔴','#e53935'],['🟠','#fb8c00'],['🟡','#fdd835'],['🟢','#43a047'],
-['🔵','#1e88e5'],['🟣','#8e24aa']
-],
-nature:[
-['⬛','#171717'],['🌑','#444444'],['🌱','#43a047'],['🌳','#236b35'],
-['🌊','#1e88e5'],['💧','#80deea'],['🌞','#fdd835'],['🔥','#e53935'],
-['🍂','#fb8c00'],['☁️','#f5f5f5']
-],
-food:[
-['⬛','#171717'],['🍎','#e53935'],['🍊','#fb8c00'],['🍋','#fdd835'],
-['🥦','#43a047'],['🫐','#1e88e5'],['🍇','#8e24aa'],['🥥','#795548'],
-['🍚','#f5f5f5'],['🍑','#f48fb1']
-]
+  full: [
+    ["⬛", 20, 20, 25],
+    ["🩶", 135, 135, 140],
+    ["⬜", 245, 245, 245],
+    ["🟥", 220, 35, 45],
+    ["🟧", 240, 125, 30],
+    ["🟨", 245, 215, 45],
+    ["🟩", 45, 165, 75],
+    ["🟦", 45, 105, 220],
+    ["🟪", 135, 65, 190],
+    ["🟫", 125, 75, 40],
+    ["🩷", 245, 145, 175],
+    ["🩵", 105, 205, 225]
+  ],
+  basic: [
+    ["⬛", 20, 20, 25],
+    ["⬜", 245, 245, 245],
+    ["🟥", 220, 35, 45],
+    ["🟨", 245, 215, 45],
+    ["🟩", 45, 165, 75],
+    ["🟦", 45, 105, 220]
+  ],
+  warm: [
+    ["⬛", 20, 20, 25],
+    ["⬜", 245, 245, 245],
+    ["🟥", 220, 35, 45],
+    ["🟧", 240, 125, 30],
+    ["🟨", 245, 215, 45],
+    ["🟫", 125, 75, 40],
+    ["🩷", 245, 145, 175]
+  ],
+  cool: [
+    ["⬛", 20, 20, 25],
+    ["⬜", 245, 245, 245],
+    ["🩶", 135, 135, 140],
+    ["🟩", 45, 165, 75],
+    ["🟦", 45, 105, 220],
+    ["🟪", 135, 65, 190],
+    ["🩵", 105, 205, 225]
+  ],
+  mono: [
+    ["⬛", 20, 20, 25],
+    ["🩶", 135, 135, 140],
+    ["⬜", 245, 245, 245]
+  ]
 };
 
-const $=id=>document.getElementById(id);
-const input=$('imageInput'),canvas=$('workCanvas');
-const ctx=canvas.getContext('2d',{willReadFrequently:true});
-let image=null,art='';
-const widthRange=$('widthRange'),heightRange=$('heightRange');
-
-function setToast(message,error=false){
-$('toast').textContent=message;
-$('toast').style.color=error?'#fca5a5':'#86efac';
-}
-function updateLabels(){
-$('widthValue').textContent=widthRange.value;
-$('heightValue').textContent=heightRange.value;
-$('dimensions').textContent=`${widthRange.value} × ${heightRange.value}`;
-}
-function loadFile(file){
-if(!file)return;
-if(!file.type.startsWith('image/')){setToast('Please choose an image file.',true);return;}
-const url=URL.createObjectURL(file),img=new Image();
-img.onload=()=>{
-image=img;
-$('generateBtn').disabled=false;
-$('placeholder').innerHTML='<b>✅</b>Image ready!<br>Choose your size and generate your art.';
-$('artPreview').hidden=true;
-$('output').value='';
-$('copyBtn').disabled=$('downloadBtn').disabled=true;
-setToast(`${file.name} loaded locally.`);
-URL.revokeObjectURL(url);
-if($('keepRatio').checked)adjustHeight();
-};
-img.onerror=()=>{
-setToast('Could not read that image. Try another file.',true);
-URL.revokeObjectURL(url);
-};
-img.src=url;
-}
-function adjustHeight(){
-if(!image||!$('keepRatio').checked)return;
-heightRange.value=Math.max(8,Math.min(64,Math.round(Number(widthRange.value)*image.height/image.width)));
-updateLabels();
-}
-
-// Convert RGB to CIE Lab for perceptually better color matching.
-function rgbToLab(rgb){
-let [r,g,b]=rgb.map(v=>v/255).map(v=>
-v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4));
-let x=(r*.4124+g*.3576+b*.1805)/.95047;
-let y=r*.2126+g*.7152+b*.0722;
-let z=(r*.0193+g*.1192+b*.9505)/1.08883;
-const f=v=>v>.008856?Math.cbrt(v):(7.787*v+16/116);
-x=f(x);y=f(y);z=f(z);
-return[116*y-16,500*(x-y),200*(y-z)];
-}
-function colorDistance(a,b){
-const dl=a[0]-b[0],da=a[1]-b[1],db=a[2]-b[2];
-return 1.15*dl*dl+da*da+db*db;
-}
-function generate(){
-if(!image)return;
-const w=Number(widthRange.value),h=Number(heightRange.value);
-canvas.width=w;canvas.height=h;
-const scale=Math.max(w/image.width,h/image.height);
-const sw=w/scale,sh=h/scale;
-const sx=(image.width-sw)/2,sy=(image.height-sh)/2;
-ctx.clearRect(0,0,w,h);
-ctx.drawImage(image,sx,sy,sw,sh,0,0,w,h);
-const pixels=ctx.getImageData(0,0,w,h).data;
-const palette=palettes[$('palette').value];
-
-// Convert palette colors once.
-const preparedPalette=palette.map(item=>{
-const hex=item[1].slice(1);
-const rgb=[parseInt(hex.slice(0,2),16),parseInt(hex.slice(2,4),16),parseInt(hex.slice(4,6),16)];
-return{emoji:item[0],lab:rgbToLab(rgb),rgb};
+$("width").addEventListener("input", () => {
+  $("widthValue").textContent = $("width").value;
+  updateHeight();
 });
 
-// Composite transparent pixels onto white.
-const work=new Float32Array(w*h*3);
-for(let i=0;i<w*h;i++){
-const alpha=pixels[i*4+3]/255;
-work[i*3]=pixels[i*4]*alpha+255*(1-alpha);
-work[i*3+1]=pixels[i*4+1]*alpha+255*(1-alpha);
-work[i*3+2]=pixels[i*4+2]*alpha+255*(1-alpha);
-}
-function closestPrepared(rgb){
-const lab=rgbToLab(rgb);
-let best=preparedPalette[0],bestDistance=Infinity;
-for(const item of preparedPalette){
-const d=colorDistance(lab,item.lab);
-if(d<bestDistance){bestDistance=d;best=item;}
-}
-return best;
-}
-
-// Floyd-Steinberg dithering improves gradients and color blending.
-const lines=[];
-for(let y=0;y<h;y++){
-const row=[];
-for(let x=0;x<w;x++){
-const i=y*w+x;
-const rgb=[work[i*3],work[i*3+1],work[i*3+2]];
-const chosen=closestPrepared(rgb);
-row.push(chosen.emoji);
-const error=rgb.map((v,c)=>v-chosen.rgb[c]);
-const spread=(nx,ny,factor)=>{
-if(nx<0||nx>=w||ny<0||ny>=h)return;
-const ni=(ny*w+nx)*3;
-for(let c=0;c<3;c++)work[ni+c]+=error[c]*factor;
-};
-spread(x+1,y,7/16);
-spread(x-1,y+1,3/16);
-spread(x,y+1,5/16);
-spread(x+1,y+1,1/16);
-}
-lines.push(row.join(''));
-}
-art=lines.join('\n');
-$('output').value=art;
-
-const preview=$('artPreview');
-preview.innerHTML='';
-preview.style.gridTemplateColumns=`repeat(${w},1fr)`;
-const fontSize=Math.max(8,Math.min(25,520/w));
-preview.style.fontSize=`${fontSize}px`;
-preview.style.width=`${w*fontSize}px`;
-for(const char of art.replace(/\n/g,'')){
-const span=document.createElement('span');
-span.className='pixel';
-span.textContent=char;
-span.style.width=`${fontSize}px`;
-span.style.height=`${fontSize*1.12}px`;
-preview.appendChild(span);
-}
-preview.hidden=false;
-$('placeholder').hidden=true;
-$('copyBtn').disabled=$('downloadBtn').disabled=false;
-$('dimensions').textContent=`${w} × ${h} · ${w*h} pixels`;
-setToast('Your pixel art is ready to copy!');
-}
-
-input.addEventListener('change',e=>loadFile(e.target.files[0]));
-const drop=$('dropZone');
-['dragenter','dragover'].forEach(name=>drop.addEventListener(name,e=>{
-e.preventDefault();drop.classList.add('drag');
-}));
-['dragleave','drop'].forEach(name=>drop.addEventListener(name,e=>{
-e.preventDefault();drop.classList.remove('drag');
-}));
-drop.addEventListener('drop',e=>loadFile(e.dataTransfer.files[0]));
-widthRange.addEventListener('input',()=>{
-if($('keepRatio').checked)adjustHeight();else updateLabels();
+$("height").addEventListener("input", () => {
+  $("heightValue").textContent = $("height").value;
 });
-heightRange.addEventListener('input',updateLabels);
-$('keepRatio').addEventListener('change',adjustHeight);
-$('generateBtn').addEventListener('click',generate);
-$('palette').addEventListener('change',()=>{if(image)generate();});
 
-$('copyBtn').addEventListener('click',async()=>{
-try{
-await navigator.clipboard.writeText(art);
-setToast('Copied! Paste your emoji art wherever you need it. 🎉');
-}catch{
-$('output').focus();$('output').select();
-const ok=document.execCommand('copy');
-setToast(ok?'Copied! 🎉':'Select the text above and copy it manually.',!ok);
+$("proportions").addEventListener("change", updateHeight);
+
+function updateHeight() {
+  if (!image || !$("proportions").checked) return;
+  const w = Number($("width").value);
+  const h = Math.max(8, Math.min(80, Math.round(w * image.height / image.width)));
+  $("height").value = h;
+  $("heightValue").textContent = h;
 }
+
+$("dropzone").addEventListener("click", () => $("file").click());
+
+$("dropzone").addEventListener("dragover", e => {
+  e.preventDefault();
+  $("dropzone").classList.add("drag");
 });
-$('downloadBtn').addEventListener('click',()=>{
-const blob=new Blob([art],{type:'text/plain;charset=utf-8'});
-const url=URL.createObjectURL(blob);
-const a=document.createElement('a');
-a.href=url;a.download='javas-emoji-pixel-art.txt';a.click();
-URL.revokeObjectURL(url);
-setToast('Text file saved.');
+
+$("dropzone").addEventListener("dragleave", () => {
+  $("dropzone").classList.remove("drag");
 });
-updateLabels();
-})();
+
+$("dropzone").addEventListener("drop", e => {
+  e.preventDefault();
+  $("dropzone").classList.remove("drag");
+  if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+});
+
+$("file").addEventListener("change", e => {
+  if (e.target.files[0]) loadFile(e.target.files[0]);
+});
+
+function loadFile(file) {
+  if (!file.type.startsWith("image/")) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+
+  img.onload = () => {
+    image = img;
+    $("sourcePreview").src = url;
+    $("sourcePreview").hidden = false;
+    updateHeight();
+    generate();
+  };
+
+  img.src = url;
+}
+
+function linearize(v) {
+  v /= 255;
+  return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+}
+
+function rgbToLab(r, g, b) {
+  r = linearize(r);
+  g = linearize(g);
+  b = linearize(b);
+
+  let x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
+  let y = (r * 0.2126 + g * 0.7152 + b * 0.0722);
+  let z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+
+  const f = t => t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+  x = f(x); y = f(y); z = f(z);
+
+  return [
+    116 * y - 16,
+    500 * (x - y),
+    200 * (y - z)
+  ];
+}
+
+const labPalettes = {};
+
+function getPalette() {
+  const name = $("palette").value;
+  if (!labPalettes[name]) {
+    labPalettes[name] = palettes[name].map(p => ({
+      emoji: p[0],
+      lab: rgbToLab(p[1], p[2], p[3])
+    }));
+  }
+  return labPalettes[name];
+}
+
+function nearestColor(r, g, b, palette) {
+  const lab = rgbToLab(r, g, b);
+  let best = palette[0];
+  let bestDistance = Infinity;
+
+  for (const color of palette) {
+    const d = Math.pow(lab[0] - color.lab[0], 2) +
+      Math.pow(lab[1] - color.lab[1], 2) +
+      Math.pow(lab[2] - color.lab[2], 2);
+
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = color;
+    }
+  }
+  return best.emoji;
+}
+
+function generate() {
+  if (!image) {
+    $("preview").textContent = "Upload eerst een afbeelding...";
+    return;
+  }
+
+  const w = Number($("width").value);
+  const h = Number($("height").value);
+
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+  canvas.width = w;
+  canvas.height = h;
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(image, 0, 0, w, h);
+
+  const data = ctx.getImageData(0, 0, w, h).data;
+  const palette = getPalette();
+
+  let grid = [];
+
+  for (let y = 0; y < h; y++) {
+    const row = [];
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      row.push(nearestColor(data[i], data[i+1], data[i+2], palette));
+    }
+    grid.push(row);
+  }
+
+  const strength = Number($("smooth").value);
+
+  // Verwijder alleen kleine geïsoleerde kleurvlekken.
+  for (let pass = 0; pass < strength; pass++) {
+    const next = grid.map(row => row.slice());
+
+    for (let y = 1; y < h - 1; y++) {
+      for (let x = 1; x < w - 1; x++) {
+        const counts = {};
+
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            const c = grid[y + dy][x + dx];
+            counts[c] = (counts[c] || 0) + 1;
+          }
+        }
+
+        let mostCommon = grid[y][x];
+        let maxCount = 0;
+
+        for (const [color, count] of Object.entries(counts)) {
+          if (count > maxCount) {
+            maxCount = count;
+            mostCommon = color;
+          }
+        }
+
+        if (maxCount >= 6) next[y][x] = mostCommon;
+      }
+    }
+
+    grid = next;
+  }
+
+  output = grid.map(row => row.join("")).join("\n");
+  $("preview").textContent = output;
+  $("stats").textContent = `${w} × ${h} pixels · ${w*h} emoji's · geen dithering`;
+}
+
+$("generate").addEventListener("click", generate);
+
+$("copy").addEventListener("click", async () => {
+  if (!output) return;
+  try {
+    await navigator.clipboard.writeText(output);
+    $("copy").textContent = "Gekopieerd!";
+    setTimeout(() => $("copy").textContent = "Kopieer emoji art", 1500);
+  } catch {
+    $("preview").focus();
+    alert("Kopiëren lukte niet. Selecteer de tekst en kopieer handmatig.");
+  }
+});
+
+$("download").addEventListener("click", () => {
+  if (!output) return;
+  const blob = new Blob([output], {type: "text/plain;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "javas-art.txt";
+  a.click();
+  URL.revokeObjectURL(url);
+});
 </script>
 </body>
 </html>
+
+
