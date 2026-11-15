@@ -1,9 +1,10 @@
- <!DOCTYPE html>
-<html lang="nl">
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Java's Art Gen V3</title>
+<title>Java's Art Gen V4</title>
 <style>
 * { box-sizing: border-box; }
 body {
@@ -13,20 +14,9 @@ body {
   color: #f4efff;
   font-family: Arial, sans-serif;
 }
-main {
-  max-width: 1050px;
-  margin: auto;
-}
-h1 {
-  text-align: center;
-  color: #c9a5ff;
-  margin-bottom: 8px;
-}
-.subtitle {
-  text-align: center;
-  color: #aaa0bd;
-  margin-bottom: 25px;
-}
+main { max-width: 1050px; margin: auto; }
+h1 { text-align: center; color: #c9a5ff; }
+.subtitle { text-align: center; color: #aaa0bd; margin-bottom: 25px; }
 .panel {
   background: #1d1830;
   border: 1px solid #40345e;
@@ -34,14 +24,8 @@ h1 {
   padding: 20px;
   margin-bottom: 18px;
 }
-label {
-  display: block;
-  margin: 15px 0 7px;
-  font-weight: bold;
-}
-input, select, button {
-  font: inherit;
-}
+label { display: block; margin: 15px 0 7px; font-weight: bold; }
+input, select, button { font: inherit; }
 input[type="range"] { width: 100%; }
 input[type="file"], select {
   width: 100%;
@@ -71,20 +55,17 @@ button.secondary { background: #39304e; }
   color: #b9a8d8;
   cursor: pointer;
 }
-#dropzone.drag {
-  background: #33264d;
-}
+#dropzone.drag { background: #33264d; }
 .preview-wrap {
   overflow: auto;
   background: #fff;
-  color: #111;
   border-radius: 10px;
   padding: 12px;
   max-height: 650px;
 }
 #preview {
   font-family: "Noto Color Emoji", "Apple Color Emoji",
-    "Segoe UI Emoji", monospace;
+    "Segoe UI Emoji", sans-serif;
   font-size: 16px;
   line-height: 1;
   white-space: pre;
@@ -100,154 +81,181 @@ button.secondary { background: #39304e; }
   border-radius: 8px;
 }
 .stats { color: #b9a8d8; font-size: 13px; }
+.hint { color: #aaa0bd; font-size: 13px; line-height: 1.5; }
 </style>
 </head>
 <body>
 <main>
-  <h1>🎨 Java's Art Gen V3</h1>
-  <p class="subtitle">Maak nette emoji pixel art van je afbeeldingen</p>
+  <h1>🎨 Java's Art Gen V4</h1>
+  <p class="subtitle">Turn images into clean emoji pixel art</p>
 
   <section class="panel">
     <div id="dropzone">
-      <strong>Sleep hier je afbeelding naartoe</strong><br>
-      of klik om een bestand te kiezen
+      <strong>Drop an image here</strong><br>
+      or click to select a file
       <input id="file" type="file" accept="image/*" hidden>
     </div>
-    <img id="sourcePreview" hidden alt="Voorbeeld van de afbeelding">
+    <img id="sourcePreview" hidden alt="Source image preview">
   </section>
 
   <section class="panel">
-    <label for="width">Breedte: <span id="widthValue">32</span> pixels</label>
+    <label for="width">Width: <span id="widthValue">32</span> pixels</label>
     <input id="width" type="range" min="8" max="80" value="32">
 
-    <label for="height">Hoogte: <span id="heightValue">32</span> pixels</label>
+    <label for="height">Height: <span id="heightValue">32</span> pixels</label>
     <input id="height" type="range" min="8" max="80" value="32">
 
     <label>
       <input id="proportions" type="checkbox" checked>
-      Verhoudingen behouden
+      Keep image proportions
     </label>
 
-    <label for="palette">Kleurenpalet</label>
+    <label for="palette">Color palette</label>
     <select id="palette">
-      <option value="full">Alle basiskleuren</option>
-      <option value="basic">Basis: zwart, wit en primaire kleuren</option>
-      <option value="warm">Warme kleuren</option>
-      <option value="cool">Koele kleuren</option>
-      <option value="mono">Zwart, grijs en wit</option>
+      <option value="full">Full color palette</option>
+      <option value="basic">Basic colors</option>
+      <option value="warm">Warm colors</option>
+      <option value="cool">Cool colors</option>
+      <option value="mono">Black, gray and white</option>
     </select>
 
-    <label for="smooth">Kleurvlakken gladstrijken</label>
-    <select id="smooth">
-      <option value="0">Uit</option>
-      <option value="1" selected>Licht</option>
-      <option value="2">Sterk</option>
+    <label for="detail">Detail preservation</label>
+    <select id="detail">
+      <option value="high">High — preserve more details</option>
+      <option value="medium" selected>Medium — focus on major details</option>
+      <option value="low">Low — simplify large shapes</option>
     </select>
+    <p class="hint">
+      High keeps more small features. Medium prioritizes recognizable
+      shapes and important details. Low creates simpler color blocks.
+    </p>
 
-    <button id="generate">Genereer pixel art</button>
+    <button id="generate">Generate Pixel Art</button>
   </section>
 
   <section class="panel">
-    <h2>Resultaat</h2>
+    <h2>Result</h2>
     <div class="preview-wrap">
-      <pre id="preview">Upload eerst een afbeelding...</pre>
+      <pre id="preview">Upload an image to get started...</pre>
     </div>
     <p id="stats" class="stats"></p>
-    <button id="copy">Kopieer emoji art</button>
+    <button id="copy">Copy Emoji Art</button>
     <button id="download" class="secondary">Download .txt</button>
   </section>
 </main>
 
 <script>
 const $ = id => document.getElementById(id);
-
 let image = null;
 let output = "";
 
 const palettes = {
   full: [
-    ["⬛", 20, 20, 25],
-    ["🩶", 135, 135, 140],
-    ["⬜", 245, 245, 245],
-    ["🟥", 220, 35, 45],
-    ["🟧", 240, 125, 30],
-    ["🟨", 245, 215, 45],
-    ["🟩", 45, 165, 75],
-    ["🟦", 45, 105, 220],
-    ["🟪", 135, 65, 190],
-    ["🟫", 125, 75, 40],
-    ["🩷", 245, 145, 175],
-    ["🩵", 105, 205, 225]
+    ["⬛",20,20,25], ["🩶",135,135,140], ["⬜",245,245,245],
+    ["🟥",220,35,45], ["🟧",240,125,30], ["🟨",245,215,45],
+    ["🟩",45,165,75], ["🟦",45,105,220], ["🟪",135,65,190],
+    ["🟫",125,75,40], ["🩷",245,145,175], ["🩵",105,205,225]
   ],
   basic: [
-    ["⬛", 20, 20, 25],
-    ["⬜", 245, 245, 245],
-    ["🟥", 220, 35, 45],
-    ["🟨", 245, 215, 45],
-    ["🟩", 45, 165, 75],
-    ["🟦", 45, 105, 220]
+    ["⬛",20,20,25], ["⬜",245,245,245], ["🟥",220,35,45],
+    ["🟨",245,215,45], ["🟩",45,165,75], ["🟦",45,105,220]
   ],
   warm: [
-    ["⬛", 20, 20, 25],
-    ["⬜", 245, 245, 245],
-    ["🟥", 220, 35, 45],
-    ["🟧", 240, 125, 30],
-    ["🟨", 245, 215, 45],
-    ["🟫", 125, 75, 40],
-    ["🩷", 245, 145, 175]
+    ["⬛",20,20,25], ["⬜",245,245,245], ["🟥",220,35,45],
+    ["🟧",240,125,30], ["🟨",245,215,45], ["🟫",125,75,40],
+    ["🩷",245,145,175]
   ],
   cool: [
-    ["⬛", 20, 20, 25],
-    ["⬜", 245, 245, 245],
-    ["🩶", 135, 135, 140],
-    ["🟩", 45, 165, 75],
-    ["🟦", 45, 105, 220],
-    ["🟪", 135, 65, 190],
-    ["🩵", 105, 205, 225]
+    ["⬛",20,20,25], ["⬜",245,245,245], ["🩶",135,135,140],
+    ["🟩",45,165,75], ["🟦",45,105,220], ["🟪",135,65,190],
+    ["🩵",105,205,225]
   ],
   mono: [
-    ["⬛", 20, 20, 25],
-    ["🩶", 135, 135, 140],
-    ["⬜", 245, 245, 245]
+    ["⬛",20,20,25], ["🩶",135,135,140], ["⬜",245,245,245]
   ]
 };
+
+const labCache = {};
+
+function linearize(v) {
+  v /= 255;
+  return v <= 0.04045 ? v / 12.92 :
+    Math.pow((v + 0.055) / 1.055, 2.4);
+}
+
+function rgbToLab(r,g,b) {
+  r = linearize(r);
+  g = linearize(g);
+  b = linearize(b);
+
+  let x = (r*.4124 + g*.3576 + b*.1805) / .95047;
+  let y = r*.2126 + g*.7152 + b*.0722;
+  let z = (r*.0193 + g*.1192 + b*.9505) / 1.08883;
+
+  const f = t => t > .008856 ? Math.cbrt(t) : 7.787*t + 16/116;
+  x=f(x); y=f(y); z=f(z);
+
+  return [116*y-16, 500*(x-y), 200*(y-z)];
+}
+
+function getPalette() {
+  const name = $("palette").value;
+  if (!labCache[name]) {
+    labCache[name] = palettes[name].map(p => ({
+      emoji:p[0], lab:rgbToLab(p[1],p[2],p[3])
+    }));
+  }
+  return labCache[name];
+}
+
+function nearestColor(r,g,b,palette) {
+  const lab = rgbToLab(r,g,b);
+  let best = palette[0], bestDistance = Infinity;
+
+  for (const color of palette) {
+    const d =
+      (lab[0]-color.lab[0])**2 +
+      (lab[1]-color.lab[1])**2 +
+      (lab[2]-color.lab[2])**2;
+
+    if (d < bestDistance) {
+      bestDistance = d;
+      best = color;
+    }
+  }
+  return best.emoji;
+}
+
+function updateHeight() {
+  if (!image || !$("proportions").checked) return;
+  const w = Number($("width").value);
+  const h = Math.max(8, Math.min(80,
+    Math.round(w * image.height / image.width)));
+  $("height").value = h;
+  $("heightValue").textContent = h;
+}
 
 $("width").addEventListener("input", () => {
   $("widthValue").textContent = $("width").value;
   updateHeight();
 });
-
 $("height").addEventListener("input", () => {
   $("heightValue").textContent = $("height").value;
 });
-
 $("proportions").addEventListener("change", updateHeight);
 
-function updateHeight() {
-  if (!image || !$("proportions").checked) return;
-  const w = Number($("width").value);
-  const h = Math.max(8, Math.min(80, Math.round(w * image.height / image.width)));
-  $("height").value = h;
-  $("heightValue").textContent = h;
-}
-
 $("dropzone").addEventListener("click", () => $("file").click());
-
 $("dropzone").addEventListener("dragover", e => {
   e.preventDefault();
   $("dropzone").classList.add("drag");
 });
-
-$("dropzone").addEventListener("dragleave", () => {
-  $("dropzone").classList.remove("drag");
-});
-
+$("dropzone").addEventListener("dragleave", () =>
+  $("dropzone").classList.remove("drag"));
 $("dropzone").addEventListener("drop", e => {
   e.preventDefault();
   $("dropzone").classList.remove("drag");
   if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
 });
-
 $("file").addEventListener("change", e => {
   if (e.target.files[0]) loadFile(e.target.files[0]);
 });
@@ -264,68 +272,55 @@ function loadFile(file) {
     updateHeight();
     generate();
   };
-
   img.src = url;
 }
 
-function linearize(v) {
-  v /= 255;
-  return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-}
+// Keep meaningful features while removing only tiny isolated color noise.
+function preserveMajorDetails(grid, strength) {
+  const h = grid.length;
+  const w = grid[0].length;
 
-function rgbToLab(r, g, b) {
-  r = linearize(r);
-  g = linearize(g);
-  b = linearize(b);
+  if (strength === 0) return grid;
 
-  let x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047;
-  let y = (r * 0.2126 + g * 0.7152 + b * 0.0722);
-  let z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+  const next = grid.map(row => row.slice());
+  const threshold = strength === 1 ? 7 : 6;
 
-  const f = t => t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
-  x = f(x); y = f(y); z = f(z);
+  for (let y = 1; y < h - 1; y++) {
+    for (let x = 1; x < w - 1; x++) {
+      const current = grid[y][x];
+      const counts = {};
 
-  return [
-    116 * y - 16,
-    500 * (x - y),
-    200 * (y - z)
-  ];
-}
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          if (!dx && !dy) continue;
+          const c = grid[y+dy][x+dx];
+          counts[c] = (counts[c] || 0) + 1;
+        }
+      }
 
-const labPalettes = {};
+      let majority = current;
+      let max = 0;
 
-function getPalette() {
-  const name = $("palette").value;
-  if (!labPalettes[name]) {
-    labPalettes[name] = palettes[name].map(p => ({
-      emoji: p[0],
-      lab: rgbToLab(p[1], p[2], p[3])
-    }));
-  }
-  return labPalettes[name];
-}
+      for (const [color,count] of Object.entries(counts)) {
+        if (count > max) {
+          max = count;
+          majority = color;
+        }
+      }
 
-function nearestColor(r, g, b, palette) {
-  const lab = rgbToLab(r, g, b);
-  let best = palette[0];
-  let bestDistance = Infinity;
-
-  for (const color of palette) {
-    const d = Math.pow(lab[0] - color.lab[0], 2) +
-      Math.pow(lab[1] - color.lab[1], 2) +
-      Math.pow(lab[2] - color.lab[2], 2);
-
-    if (d < bestDistance) {
-      bestDistance = d;
-      best = color;
+      // Only replace a pixel when almost all neighbors agree.
+      // This protects edges and small recognizable features.
+      if (majority !== current && max >= threshold) {
+        next[y][x] = majority;
+      }
     }
   }
-  return best.emoji;
+  return next;
 }
 
 function generate() {
   if (!image) {
-    $("preview").textContent = "Upload eerst een afbeelding...";
+    $("preview").textContent = "Upload an image to get started...";
     return;
   }
 
@@ -333,88 +328,59 @@ function generate() {
   const h = Number($("height").value);
 
   const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const ctx = canvas.getContext("2d", {willReadFrequently:true});
 
   canvas.width = w;
   canvas.height = h;
-
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, w, h);
+  ctx.fillRect(0,0,w,h);
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(image, 0, 0, w, h);
+  ctx.drawImage(image,0,0,w,h);
 
-  const data = ctx.getImageData(0, 0, w, h).data;
+  const data = ctx.getImageData(0,0,w,h).data;
   const palette = getPalette();
 
   let grid = [];
 
-  for (let y = 0; y < h; y++) {
+  for (let y=0; y<h; y++) {
     const row = [];
-    for (let x = 0; x < w; x++) {
-      const i = (y * w + x) * 4;
-      row.push(nearestColor(data[i], data[i+1], data[i+2], palette));
+    for (let x=0; x<w; x++) {
+      const i = (y*w+x)*4;
+      row.push(nearestColor(data[i],data[i+1],data[i+2],palette));
     }
     grid.push(row);
   }
 
-  const strength = Number($("smooth").value);
+  const detail = $("detail").value;
+  const smoothingStrength =
+    detail === "high" ? 0 :
+    detail === "medium" ? 1 : 2;
 
-  // Verwijder alleen kleine geïsoleerde kleurvlekken.
-  for (let pass = 0; pass < strength; pass++) {
-    const next = grid.map(row => row.slice());
-
-    for (let y = 1; y < h - 1; y++) {
-      for (let x = 1; x < w - 1; x++) {
-        const counts = {};
-
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            const c = grid[y + dy][x + dx];
-            counts[c] = (counts[c] || 0) + 1;
-          }
-        }
-
-        let mostCommon = grid[y][x];
-        let maxCount = 0;
-
-        for (const [color, count] of Object.entries(counts)) {
-          if (count > maxCount) {
-            maxCount = count;
-            mostCommon = color;
-          }
-        }
-
-        if (maxCount >= 6) next[y][x] = mostCommon;
-      }
-    }
-
-    grid = next;
-  }
+  grid = preserveMajorDetails(grid,smoothingStrength);
 
   output = grid.map(row => row.join("")).join("\n");
   $("preview").textContent = output;
-  $("stats").textContent = `${w} × ${h} pixels · ${w*h} emoji's · geen dithering`;
+  $("stats").textContent =
+    `${w} × ${h} pixels · ${w*h} emoji cells · No dithering`;
 }
 
-$("generate").addEventListener("click", generate);
+$("generate").addEventListener("click",generate);
 
-$("copy").addEventListener("click", async () => {
+$("copy").addEventListener("click",async () => {
   if (!output) return;
   try {
     await navigator.clipboard.writeText(output);
-    $("copy").textContent = "Gekopieerd!";
-    setTimeout(() => $("copy").textContent = "Kopieer emoji art", 1500);
+    $("copy").textContent = "Copied!";
+    setTimeout(() => $("copy").textContent = "Copy Emoji Art",1500);
   } catch {
-    $("preview").focus();
-    alert("Kopiëren lukte niet. Selecteer de tekst en kopieer handmatig.");
+    alert("Copying failed. Please select and copy the preview manually.");
   }
 });
 
-$("download").addEventListener("click", () => {
+$("download").addEventListener("click",() => {
   if (!output) return;
-  const blob = new Blob([output], {type: "text/plain;charset=utf-8"});
+  const blob = new Blob([output],{type:"text/plain;charset=utf-8"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -425,5 +391,4 @@ $("download").addEventListener("click", () => {
 </script>
 </body>
 </html>
-
 
