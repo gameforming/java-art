@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#100d1c">
-<title>Java's Art Gen V5 — Advanced Emoji Pixel Art</title>
+<title>Java's Art Gen V6 — Advanced Emoji Pixel Art</title>
 <style>
 :root {
   color-scheme: dark;
@@ -138,7 +138,7 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent);
   <header class="topbar">
     <div class="brand">
       <div class="brand-mark">🎨</div>
-      <div><div class="brand-name">Java's Art Gen <span style="color:#b995f4">V5</span></div><div class="brand-sub">Advanced Emoji Pixel Art Studio</div></div>
+      <div><div class="brand-name">Java's Art Gen <span style="color:#b995f4">V6</span></div><div class="brand-sub">Advanced Emoji Pixel Art Studio</div></div>
     </div>
     <div class="local-pill">Private · Runs in your browser</div>
   </header>
@@ -146,7 +146,7 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent);
   <section class="hero">
     <div class="eyebrow">Turn images into art</div>
     <h1>Build better <span style="color:#c9a5ff">pixel art.</span></h1>
-    <p>Convert photos and illustrations into detailed emoji mosaics. Fine-tune the palette, protect important edges, and blend colors with optional dithering.</p>
+    <p>A detail-aware emoji mosaic engine with hue-locked color matching, smarter sampling, and clean pixel-level rendering.</p>
   </section>
 
   <main class="workspace">
@@ -168,12 +168,12 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent);
         <div class="panel-heading"><h2>2. Art settings</h2><span class="step">Customize</span></div>
         <div class="two-controls">
           <div class="control" style="margin-top:0">
-            <div class="label-line"><label for="width">Width</label><span class="value"><span id="widthValue">40</span> px</span></div>
-            <input id="width" type="range" min="8" max="100" value="40">
+            <div class="label-line"><label for="width">Width</label><span class="value"><span id="widthValue">64</span> px</span></div>
+            <input id="width" type="range" min="8" max="160" value="64">
           </div>
           <div class="control" style="margin-top:0">
-            <div class="label-line"><label for="height">Height</label><span class="value"><span id="heightValue">40</span> px</span></div>
-            <input id="height" type="range" min="8" max="100" value="40">
+            <div class="label-line"><label for="height">Height</label><span class="value"><span id="heightValue">64</span> px</span></div>
+            <input id="height" type="range" min="8" max="160" value="64">
           </div>
         </div>
         <label class="check-row"><input id="proportions" type="checkbox" checked> Keep original image proportions</label>
@@ -257,10 +257,10 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent);
         <button id="downloadTxt" class="btn secondary" type="button" disabled>Download .TXT</button>
         <button id="downloadPng" class="btn secondary" type="button" disabled>Download .PNG</button>
       </div>
-      <p class="tip">Tip: For portraits, try 48–72 pixels wide with the Mega palette and blending turned off. For landscapes, try 64–90 pixels wide with subtle Floyd–Steinberg blending.</p>
+      <p class="tip">The engine samples the original image directly, protects saturated color families, and only smooths isolated near-matching noise. For tiny facial features or armor details, use a larger canvas (80–120 px).</p>
     </section>
   </main>
-  <div class="footer">Java's Art Gen V5 · Emoji pixel art, made locally in your browser.</div>
+  <div class="footer">Java's Art Gen V6 · Emoji pixel art, made locally in your browser.</div>
 </div>
 
 <script>
@@ -324,9 +324,36 @@ function rgbToLab(r, g, b) {
   x = f(x); y = f(y); z = f(z);
   return [116*y-16, 500*(x-y), 200*(y-z)];
 }
+function rgbToHsv(r,g,b) {
+  r/=255; g/=255; b/=255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b), d=max-min;
+  let h=0;
+  if(d) {
+    if(max===r) h=60*(((g-b)/d)%6);
+    else if(max===g) h=60*((b-r)/d+2);
+    else h=60*((r-g)/d+4);
+  }
+  if(h<0)h+=360;
+  return {h,s:max===0?0:d/max,v:max};
+}
+function hueDistance(a,b) { const d=Math.abs(a-b)%360; return Math.min(d,360-d); }
 function labDistance(a, b) {
-  // Slightly favor lightness accuracy while retaining hue and saturation separation.
-  return 1.15*(a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2;
+  return 1.08*(a[0]-b[0])**2 + (a[1]-b[1])**2 + (b[2]-a[2])**2;
+}
+function colorMatchScore(srcLab,srcHsv,color) {
+  const labScore=Math.sqrt(labDistance(srcLab,color.lab));
+  const saturationGap=Math.abs(srcHsv.s-color.hsv.s);
+  let score=labScore + saturationGap*24;
+  // Hue protection keeps saturated yellow/gold from drifting into red, brown or white.
+  if(srcHsv.s>.20) {
+    if(color.hsv.s<.12) score += 34*srcHsv.s;
+    else {
+      const hueGap=hueDistance(srcHsv.h,color.hsv.h);
+      score += hueGap*(.48 + srcHsv.s*.72);
+      if(hueGap>58) score += (hueGap-58)*1.15;
+    }
+  }
+  return score;
 }
 function getActivePalette() {
   const base = PALETTES[$("palette").value] || COLORS;
@@ -335,18 +362,20 @@ function getActivePalette() {
     : style === "illustrated" ? base.filter(c => c[4] !== "tile") : base;
   const safeSelected = selected.length >= 3 ? selected : base;
   const key = `${$("palette").value}-${style}`;
-  if (!labCache.has(key)) labCache.set(key, safeSelected.map(c => ({ emoji: c[0], rgb: c.slice(1,4), lab: rgbToLab(c[1],c[2],c[3]) })));
+  if (!labCache.has(key)) labCache.set(key, safeSelected.map(c => ({
+    emoji:c[0], rgb:c.slice(1,4), lab:rgbToLab(c[1],c[2],c[3]), hsv:rgbToHsv(c[1],c[2],c[3])
+  })));
   return labCache.get(key);
 }
-function nearestColorLab(lab, palette) {
-  let best = palette[0], bestDistance = Infinity;
-  for (const color of palette) {
-    const distance = labDistance(lab, color.lab);
-    if (distance < bestDistance) { bestDistance = distance; best = color; }
+function nearestColorRgb(r,g,b,palette) {
+  const srcLab=rgbToLab(r,g,b),srcHsv=rgbToHsv(r,g,b);
+  let best=palette[0],bestScore=Infinity;
+  for(const color of palette) {
+    const score=colorMatchScore(srcLab,srcHsv,color);
+    if(score<bestScore){bestScore=score;best=color;}
   }
   return best;
 }
-function nearestColorRgb(r,g,b,palette) { return nearestColorLab(rgbToLab(r,g,b), palette); }
 function clamp(v, min=0, max=255) { return Math.max(min, Math.min(max, v)); }
 
 function transformImageData(data, w, h) {
@@ -378,68 +407,105 @@ function sharpenData(data, w, h, amount) {
   }
   return out;
 }
-function mapPixels(data,w,h,palette,blendMode,blendStrength) {
-  const grid = Array.from({length:h},()=>Array(w));
-  const strength = blendStrength / 100;
-  if (blendMode === "fs" && strength > 0) {
-    const work = new Float32Array(w*h*3);
-    for (let i=0;i<w*h;i++) {
-      const p=i*4, q=i*3;
-      work[q]=data[p]; work[q+1]=data[p+1]; work[q+2]=data[p+2];
+
+// Sample the original image at the target grid size without first crushing it
+// into a tiny, blurred canvas. A center-weighted 3x3 sample retains narrow
+// features while surrounding samples keep gradients and broad areas stable.
+function sampleImageToGrid(img,w,h,detail) {
+  const maxSource=1800;
+  const scale=Math.min(1,maxSource/Math.max(img.naturalWidth,img.naturalHeight));
+  const sw=Math.max(1,Math.round(img.naturalWidth*scale));
+  const sh=Math.max(1,Math.round(img.naturalHeight*scale));
+  const canvas=document.createElement('canvas'); canvas.width=sw; canvas.height=sh;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});
+  ctx.fillStyle='#ffffff';ctx.fillRect(0,0,sw,sh);
+  ctx.drawImage(img,0,0,sw,sh);
+  const source=ctx.getImageData(0,0,sw,sh).data;
+  const result=new Uint8ClampedArray(w*h*4);
+  const positions=[.16,.5,.84], detailFactor=detail/100;
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++) {
+    const x0=x*sw/w, x1=(x+1)*sw/w, y0=y*sh/h, y1=(y+1)*sh/h;
+    const samples=[];
+    for(const fy of positions) for(const fx of positions) {
+      const sx=Math.min(sw-1,Math.max(0,Math.floor(x0+(x1-x0)*fx)));
+      const sy=Math.min(sh-1,Math.max(0,Math.floor(y0+(y1-y0)*fy)));
+      const i=(sy*sw+sx)*4;
+      samples.push([source[i],source[i+1],source[i+2],source[i+3]]);
     }
-    const spread=(x,y,er,eg,eb,weight)=>{
+    const mean=[0,0,0];
+    for(const s of samples) for(let c=0;c<3;c++) mean[c]+=s[c]/samples.length;
+    const center=samples[4];
+    let variance=0;
+    for(const sample of samples) variance+=Math.hypot(sample[0]-mean[0],sample[1]-mean[1],sample[2]-mean[2])/samples.length;
+    const edgeBoost=Math.min(.18,Math.max(0,(variance-18)/150)*.18)*detailFactor;
+    const centerWeight=.32+.22*detailFactor+edgeBoost;
+    const out=(y*w+x)*4;
+    for(let c=0;c<3;c++) result[out+c]=mean[c]*(1-centerWeight)+center[c]*centerWeight;
+    result[out+3]=center[3];
+  }
+  return result;
+}
+
+function mapPixels(data,w,h,palette,blendMode,blendStrength) {
+  const grid=Array.from({length:h},()=>Array(w));
+  const strength=(blendStrength/100)*.58;
+  if(blendMode==='fs' && strength>0) {
+    const work=new Float32Array(w*h*3);
+    for(let i=0;i<w*h;i++){const p=i*4,q=i*3;work[q]=data[p];work[q+1]=data[p+1];work[q+2]=data[p+2];}
+    const spread=(x,y,error,weight)=>{
       if(x<0||x>=w||y<0||y>=h)return;
-      const q=(y*w+x)*3;
-      work[q]+=er*weight*strength; work[q+1]+=eg*weight*strength; work[q+2]+=eb*weight*strength;
+      const q=(y*w+x)*3,delta=error*weight*strength;
+      // Diffuse lightness only, not RGB channel errors, to reduce hue bleeding.
+      work[q]+=delta;work[q+1]+=delta;work[q+2]+=delta;
     };
     for(let y=0;y<h;y++) for(let x=0;x<w;x++) {
-      const q=(y*w+x)*3;
-      const old=[clamp(work[q]),clamp(work[q+1]),clamp(work[q+2])];
-      const chosen=nearestColorRgb(old[0],old[1],old[2],palette);
-      grid[y][x]=chosen;
-      const er=old[0]-chosen.rgb[0], eg=old[1]-chosen.rgb[1], eb=old[2]-chosen.rgb[2];
-      spread(x+1,y,er,eg,eb,7/16); spread(x-1,y+1,er,eg,eb,3/16);
-      spread(x,y+1,er,eg,eb,5/16); spread(x+1,y+1,er,eg,eb,1/16);
+      const q=(y*w+x)*3,oldR=clamp(work[q]),oldG=clamp(work[q+1]),oldB=clamp(work[q+2]);
+      const chosen=nearestColorRgb(oldR,oldG,oldB,palette); grid[y][x]=chosen;
+      const oldL=.2126*oldR+.7152*oldG+.0722*oldB;
+      const newL=.2126*chosen.rgb[0]+.7152*chosen.rgb[1]+.0722*chosen.rgb[2];
+      const error=clamp(oldL-newL,-70,70);
+      spread(x+1,y,error,7/16);spread(x-1,y+1,error,3/16);spread(x,y+1,error,5/16);spread(x+1,y+1,error,1/16);
     }
     return grid;
   }
-  const bayer = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  const bayer=[[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
   for(let y=0;y<h;y++) for(let x=0;x<w;x++) {
-    const i=(y*w+x)*4;
-    let r=data[i],g=data[i+1],b=data[i+2];
-    if(blendMode === "ordered" && strength > 0) {
-      const n=(bayer[y%4][x%4]-7.5)*strength*2.2;
-      r=clamp(r+n); g=clamp(g+n); b=clamp(b+n);
+    const i=(y*w+x)*4;let r=data[i],g=data[i+1],b=data[i+2];
+    if(blendMode==='ordered' && strength>0) {
+      const n=(bayer[y%4][x%4]-7.5)*strength*1.25;
+      r=clamp(r+n);g=clamp(g+n);b=clamp(b+n);
     }
     grid[y][x]=nearestColorRgb(r,g,b,palette);
   }
   return grid;
 }
-function cleanupGrid(grid, palette, amount, detail) {
-  if(amount<=0) return grid;
-  const h=grid.length,w=grid[0].length;
-  const next=grid.map(row=>row.slice());
-  // Only repair isolated, low-contrast noise. Strongly different one-pixel features are kept.
-  const maxVotes = amount > 70 ? 7 : amount > 35 ? 7 : 8;
-  const colorLimit = 7 + amount*.24 + detail*.08;
+
+function cleanupGrid(grid,palette,amount,detail) {
+  if(amount<=0)return grid;
+  const h=grid.length,w=grid[0].length,next=grid.map(row=>row.slice());
+  const requiredVotes=amount>70?7:8;
+  const maxDistance=10+(amount*.10)+(100-detail)*.035;
   for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++) {
-    const current=grid[y][x], counts=new Map();
+    const current=grid[y][x],counts=new Map();
     for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) {
       if(dx===0&&dy===0)continue;
-      const emoji=grid[y+dy][x+dx]; counts.set(emoji,(counts.get(emoji)||0)+1);
+      const item=grid[y+dy][x+dx],key=item.emoji;
+      const found=counts.get(key);
+      if(found)found.count++;
+      else counts.set(key,{count:1,item});
     }
-    let majority=current,votes=0;
-    for(const [emoji,count] of counts) if(count>votes){majority=emoji;votes=count;}
-    if(majority===current || votes<maxVotes) continue;
-    const a=current.lab,b=majority.lab;
-    if(a&&b&&Math.sqrt(labDistance(a,b))<=colorLimit) next[y][x]=majority;
+    let majority=null;
+    for(const entry of counts.values()) if(!majority||entry.count>majority.count)majority=entry;
+    if(!majority||majority.item.emoji===current.emoji||majority.count<requiredVotes)continue;
+    const distance=Math.sqrt(labDistance(current.lab,majority.item.lab));
+    if(distance<=maxDistance)next[y][x]=majority.item;
   }
   return next;
 }
 function updateHeight() {
   if(!sourceImage || !$('proportions').checked)return;
   const w=Number($('width').value);
-  const h=clamp(Math.round(w*sourceImage.naturalHeight/sourceImage.naturalWidth),8,100);
+  const h=clamp(Math.round(w*sourceImage.naturalHeight/sourceImage.naturalWidth),8,160);
   $('height').value=h; $('heightValue').textContent=h;
 }
 function drawSourcePreview(url) {
@@ -462,18 +528,12 @@ function setState(message){ $('resultState').textContent=message; }
 function generate() {
   if(!sourceImage || busy)return;
   busy=true; setState('Generating…'); $('generate').disabled=true;
-  // Yield one frame so the UI can display its working state before processing.
   requestAnimationFrame(()=>{
     try {
       const w=Number($('width').value), h=Number($('height').value);
-      const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
-      canvas.width=w; canvas.height=h;
-      ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h);
-      ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
-      ctx.drawImage(sourceImage,0,0,w,h);
-      let data=transformImageData(ctx.getImageData(0,0,w,h).data,w,h);
       const detail=Number($('detail').value);
-      data=sharpenData(data,w,h,(detail/100)*.72);
+      let data=transformImageData(sampleImageToGrid(sourceImage,w,h,detail),w,h);
+      data=sharpenData(data,w,h,(detail/100)*.28);
       const palette=getActivePalette();
       let grid=mapPixels(data,w,h,palette,$('dither').value,Number($('blend').value));
       grid=cleanupGrid(grid,palette,Number($('cleanup').value),detail);
@@ -496,10 +556,10 @@ function scheduleGenerate(){
   clearTimeout(generateTimer); generateTimer=setTimeout(generate,180);
 }
 function resetSettings(){
-  $('width').value=40; $('height').value=40; $('proportions').checked=true;
+  $('width').value=64; $('height').value=64; $('proportions').checked=true;
   $('palette').value='full'; $('style').value='mixed'; $('detail').value=75; $('cleanup').value=35;
   $('dither').value='none'; $('blend').value=35; $('brightness').value=0; $('contrast').value=100; $('saturation').value=100;
-  $('widthValue').textContent='40'; $('heightValue').textContent='40'; $('detailValue').textContent='75%'; $('cleanupValue').textContent='35%';
+  $('widthValue').textContent='64'; $('heightValue').textContent='64'; $('detailValue').textContent='75%'; $('cleanupValue').textContent='35%';
   $('blendValue').textContent='35%'; $('brightnessValue').textContent='0'; $('contrastValue').textContent='100%'; $('saturationValue').textContent='100%';
   if(sourceImage) updateHeight(); scheduleGenerate();
 }
