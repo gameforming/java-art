@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#100d1c">
+<title>Java's Art Gen V5 — Advanced Emoji Pixel Art</title>
+<style>
+:root {
+  color-scheme: dark;
+  --bg: #100d1c;
+  --panel: #1c1730;
+  --panel-2: #241d3b;
+  --line: #40345e;
+  --muted: #aaa0bd;
+  --text: #f4efff;
+  --accent: #a978f0;
+  --accent-2: #c9a5ff;
+  --good: #87d7b0;
+  --radius: 18px;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  padding: 28px 18px 56px;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse at 12% 0%, rgba(128, 77, 201, .19), transparent 34rem),
+    radial-gradient(ellipse at 100% 18%, rgba(54, 97, 186, .12), transparent 30rem),
+    var(--bg);
+}
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, #dropzone:focus-visible {
+  outline: 2px solid var(--accent-2); outline-offset: 3px;
+}
+.app { max-width: 1320px; margin: 0 auto; }
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 30px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand-mark {
+  display: grid; place-items: center; width: 48px; height: 48px; flex: 0 0 auto;
+  border: 1px solid #72569f; border-radius: 15px;
+  background: linear-gradient(145deg, #49316e, #251c3e); font-size: 25px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.22);
+}
+.brand-name { font-weight: 800; letter-spacing: -.03em; font-size: 17px; }
+.brand-sub { margin-top: 3px; color: var(--muted); font-size: 12px; }
+.local-pill { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border: 1px solid #344c48; border-radius: 999px; background: #172823; color: #b5e8d0; font-size: 12px; white-space: nowrap; }
+.local-pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #69d49d; box-shadow: 0 0 10px #69d49d; }
+.hero { margin: 0 auto 26px; text-align: center; max-width: 760px; }
+.eyebrow { color: var(--accent-2); text-transform: uppercase; font-weight: 800; letter-spacing: .16em; font-size: 10px; }
+h1 { margin: 10px 0 9px; font-size: clamp(30px, 5vw, 48px); line-height: 1.04; letter-spacing: -.045em; }
+.hero p { color: var(--muted); font-size: 15px; line-height: 1.6; margin: 0; }
+.workspace { display: grid; grid-template-columns: minmax(290px, 390px) minmax(0, 1fr); gap: 18px; align-items: start; }
+.panel { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(160deg, rgba(37,29,60,.96), rgba(25,21,43,.97)); box-shadow: 0 18px 50px rgba(0,0,0,.14); }
+.panel + .panel { margin-top: 16px; }
+.panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+.panel-heading h2 { margin: 0; font-size: 16px; letter-spacing: -.015em; }
+.step { color: #9f8bbd; font-size: 11px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+#dropzone {
+  display: block; border: 1.5px dashed #715b99; border-radius: 14px; padding: 25px 15px;
+  text-align: center; color: #c9b8e8; background: rgba(120,83,171,.07); cursor: pointer;
+  transition: .18s ease;
+}
+#dropzone:hover, #dropzone.drag { border-color: #c09cff; background: rgba(150,99,223,.16); transform: translateY(-1px); }
+.drop-icon { font-size: 29px; display: block; margin-bottom: 9px; }
+.drop-main { color: var(--text); font-weight: 750; font-size: 14px; }
+.drop-sub { margin-top: 5px; color: var(--muted); font-size: 12px; }
+#sourcePreview { display: block; max-width: 100%; max-height: 190px; margin: 14px auto 0; border-radius: 10px; object-fit: contain; }
+.file-meta { color: var(--muted); font-size: 11px; text-align: center; margin-top: 7px; overflow-wrap: anywhere; }
+.control { margin-top: 18px; }
+.control:first-child { margin-top: 0; }
+.label-line { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+label { font-size: 12px; font-weight: 750; color: #e8def8; }
+.value { color: var(--accent-2); font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: #ac7cf1; display: block; }
+select {
+  width: 100%; min-height: 42px; padding: 9px 12px; color: var(--text); background: #29213e;
+  border: 1px solid #51436f; border-radius: 9px;
+}
+.check-row { display: flex; align-items: center; gap: 9px; margin-top: 15px; color: #ddd2ee; font-size: 12px; }
+input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+.hint { color: var(--muted); font-size: 11px; line-height: 1.5; margin: 7px 0 0; }
+.two-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.divider { height: 1px; background: rgba(130,111,163,.2); margin: 19px 0; }
+.button-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.btn {
+  border: 1px solid transparent; border-radius: 10px; padding: 11px 14px; color: white;
+  background: linear-gradient(135deg, #9a65df, #7650c5); font-weight: 800; font-size: 12px;
+  box-shadow: 0 7px 18px rgba(91,55,145,.22); transition: .15s ease;
+}
+.btn:hover { filter: brightness(1.12); transform: translateY(-1px); }
+.btn:disabled { cursor: not-allowed; opacity: .45; transform: none; }
+.btn.secondary { background: #332a49; border-color: #51436f; box-shadow: none; color: #e7def5; }
+.btn.ghost { background: transparent; border-color: #51436f; box-shadow: none; color: #cfc1e5; }
+.btn.wide { width: 100%; padding: 13px 16px; font-size: 13px; }
+.result-panel { min-height: 570px; }
+.result-top { align-items: flex-start; }
+.result-top .panel-heading { margin-bottom: 0; }
+.result-state { color: var(--muted); font-size: 11px; text-align: right; }
+.preview-wrap {
+  overflow: auto; max-height: min(66vh, 760px); min-height: 290px; padding: 18px;
+  border: 1px solid #d7d2df; border-radius: 12px; background: #f7f5fa;
+  scrollbar-color: #a99abf #e5e0ed;
+}
+#preview {
+  margin: 0; width: max-content; min-width: 100%; color: #17131f;
+  font-family: "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif;
+  font-size: 17px; line-height: 1.08; letter-spacing: 0; white-space: pre;
+  font-variant-emoji: emoji;
+}
+.empty-state { min-height: 250px; display: grid; place-content: center; text-align: center; color: #796d8d; white-space: normal; max-width: 300px; margin: auto; }
+.empty-state .big { font-size: 42px; margin-bottom: 10px; }
+.empty-state strong { color: #514563; font-size: 14px; }
+.empty-state span { margin-top: 6px; font-size: 12px; line-height: 1.5; }
+.stats-row { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 14px; margin: 12px 1px 14px; color: var(--muted); font-size: 11px; }
+.stats-row strong { color: #d8c9ef; font-weight: 700; }
+.tip { margin-top: 14px; color: #9588aa; font-size: 11px; line-height: 1.55; }
+.footer { text-align: center; color: #786c90; font-size: 11px; margin-top: 24px; }
+.hidden { display: none !important; }
+@media (max-width: 850px) { .workspace { grid-template-columns: 1fr; } .result-panel { min-height: 0; } .preview-wrap { max-height: 62vh; } }
+@media (max-width: 520px) {
+  body { padding: 17px 11px 38px; }
+  .topbar { margin-bottom: 23px; }
+  .brand-mark { width: 42px; height: 42px; }
+  .local-pill { font-size: 10px; padding: 8px 9px; }
+  .panel { padding: 15px; border-radius: 14px; }
+  .two-controls { gap: 10px; }
+  .preview-wrap { padding: 12px; }
+  #preview { font-size: 15px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">🎨</div>
+      <div><div class="brand-name">Java's Art Gen <span style="color:#b995f4">V5</span></div><div class="brand-sub">Advanced Emoji Pixel Art Studio</div></div>
+    </div>
+    <div class="local-pill">Private · Runs in your browser</div>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">Turn images into art</div>
+    <h1>Build better <span style="color:#c9a5ff">pixel art.</span></h1>
+    <p>Convert photos and illustrations into detailed emoji mosaics. Fine-tune the palette, protect important edges, and blend colors with optional dithering.</p>
+  </section>
+
+  <main class="workspace">
+    <aside>
+      <section class="panel">
+        <div class="panel-heading"><h2>1. Choose an image</h2><span class="step">Upload</span></div>
+        <div id="dropzone" role="button" tabindex="0" aria-label="Choose or drop an image">
+          <span class="drop-icon">🖼️</span>
+          <div class="drop-main">Drop your image here</div>
+          <div class="drop-sub">or click to browse · PNG, JPG, WEBP, GIF</div>
+          <input id="file" type="file" accept="image/*" hidden>
+        </div>
+        <img id="sourcePreview" hidden alt="Uploaded source preview">
+        <div id="fileMeta" class="file-meta"></div>
+        <div class="button-row" style="margin-top:10px"><button id="demo" class="btn ghost" type="button">Try a demo image</button><button id="clear" class="btn ghost" type="button" disabled>Remove image</button></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-heading"><h2>2. Art settings</h2><span class="step">Customize</span></div>
+        <div class="two-controls">
+          <div class="control" style="margin-top:0">
+            <div class="label-line"><label for="width">Width</label><span class="value"><span id="widthValue">40</span> px</span></div>
+            <input id="width" type="range" min="8" max="100" value="40">
+          </div>
+          <div class="control" style="margin-top:0">
+            <div class="label-line"><label for="height">Height</label><span class="value"><span id="heightValue">40</span> px</span></div>
+            <input id="height" type="range" min="8" max="100" value="40">
+          </div>
+        </div>
+        <label class="check-row"><input id="proportions" type="checkbox" checked> Keep original image proportions</label>
+        <div class="divider"></div>
+        <div class="control">
+          <div class="label-line"><label for="palette">Color palette</label></div>
+          <select id="palette">
+            <option value="full">Mega palette · maximum color range</option>
+            <option value="nature">Nature · greens, earth, sky and water</option>
+            <option value="vivid">Vivid · bright and saturated</option>
+            <option value="warm">Warm · fire, sunset and autumn</option>
+            <option value="cool">Cool · ocean, ice and night</option>
+            <option value="mono">Monochrome · black, gray and white</option>
+          </select>
+        </div>
+        <div class="control">
+          <div class="label-line"><label for="style">Emoji style</label></div>
+          <select id="style">
+            <option value="mixed">Mixed · color tiles and illustrated emojis</option>
+            <option value="tiles">Clean tiles · geometric color blocks</option>
+            <option value="illustrated">Illustrated · objects, nature and textures</option>
+          </select>
+        </div>
+        <div class="divider"></div>
+        <div class="control">
+          <div class="label-line"><label for="detail">Detail preservation</label><span class="value" id="detailValue">75%</span></div>
+          <input id="detail" type="range" min="0" max="100" value="75">
+          <p class="hint">Higher values protect sharp edges and small features. Lower values simplify tiny details into cleaner shapes.</p>
+        </div>
+        <div class="control">
+          <div class="label-line"><label for="cleanup">Artifact cleanup</label><span class="value" id="cleanupValue">35%</span></div>
+          <input id="cleanup" type="range" min="0" max="100" value="35">
+          <p class="hint">Removes isolated near-color noise while keeping high-contrast details such as eyes, outlines and tiny highlights.</p>
+        </div>
+        <div class="control">
+          <div class="label-line"><label for="dither">Color blending</label></div>
+          <select id="dither">
+            <option value="none">Off · crisp color regions</option>
+            <option value="fs">Floyd–Steinberg · smooth color mixing</option>
+            <option value="ordered">Ordered · subtle pixel texture</option>
+          </select>
+        </div>
+        <div class="control">
+          <div class="label-line"><label for="blend">Blend strength</label><span class="value" id="blendValue">35%</span></div>
+          <input id="blend" type="range" min="0" max="100" value="35">
+        </div>
+        <div class="divider"></div>
+        <div class="two-controls">
+          <div class="control" style="margin-top:0">
+            <div class="label-line"><label for="brightness">Brightness</label><span class="value" id="brightnessValue">0</span></div>
+            <input id="brightness" type="range" min="-40" max="40" value="0">
+          </div>
+          <div class="control" style="margin-top:0">
+            <div class="label-line"><label for="contrast">Contrast</label><span class="value" id="contrastValue">100%</span></div>
+            <input id="contrast" type="range" min="60" max="160" value="100">
+          </div>
+        </div>
+        <div class="control">
+          <div class="label-line"><label for="saturation">Color intensity</label><span class="value" id="saturationValue">100%</span></div>
+          <input id="saturation" type="range" min="0" max="180" value="100">
+        </div>
+        <label class="check-row"><input id="autoGenerate" type="checkbox" checked> Regenerate when settings change</label>
+        <div class="button-row" style="margin-top:17px">
+          <button id="generate" class="btn wide" type="button" disabled>✨ Generate Pixel Art</button>
+          <button id="reset" class="btn secondary" type="button">Reset settings</button>
+        </div>
+      </section>
+    </aside>
+
+    <section class="panel result-panel">
+      <div class="panel-heading result-top">
+        <div><h2>3. Your pixel art</h2><div class="hint" style="margin-top:4px">Your result updates as you adjust the settings.</div></div>
+        <div class="result-state" id="resultState">Waiting for an image</div>
+      </div>
+      <div class="preview-wrap" style="margin-top:16px">
+        <div id="preview" class="empty-state"><div class="big">🧩</div><strong>Your canvas is ready</strong><span>Upload an image or try the demo to create your first emoji pixel artwork.</span></div>
+      </div>
+      <div class="stats-row"><span id="stats">No artwork generated yet</span><span id="colorStats"></span></div>
+      <div class="button-row">
+        <button id="copy" class="btn" type="button" disabled>Copy Emoji Art</button>
+        <button id="downloadTxt" class="btn secondary" type="button" disabled>Download .TXT</button>
+        <button id="downloadPng" class="btn secondary" type="button" disabled>Download .PNG</button>
+      </div>
+      <p class="tip">Tip: For portraits, try 48–72 pixels wide with the Mega palette and blending turned off. For landscapes, try 64–90 pixels wide with subtle Floyd–Steinberg blending.</p>
+    </section>
+  </main>
+  <div class="footer">Java's Art Gen V5 · Emoji pixel art, made locally in your browser.</div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+let sourceImage = null;
+let sourceUrl = null;
+let output = "";
+let outputGrid = [];
+let outputPalette = [];
+let busy = false;
+
+// Each entry is [emoji, approximate red, green, blue, category].
+// The palette deliberately uses objects, nature, weather and geometric symbols — no face emojis.
+const COLORS = [
+  ["⬛", 24, 24, 29, "tile"], ["◼️", 65, 65, 71, "tile"], ["🩶", 145, 148, 153, "tile"], ["🩶", 175, 175, 180, "tile"], ["⬜", 246, 246, 244, "tile"],
+  ["🟥", 220, 43, 50, "tile"], ["🔴", 238, 47, 55, "tile"], ["🟥", 179, 24, 38, "tile"], ["🧱", 164, 75, 55, "object"], ["🍎", 206, 35, 48, "nature"],
+  ["🟧", 245, 126, 35, "tile"], ["🟠", 247, 139, 39, "tile"], ["🟠", 204, 86, 23, "tile"], ["🍊", 244, 142, 38, "nature"], ["🥕", 230, 111, 35, "nature"],
+  ["🟨", 247, 218, 54, "tile"], ["🟡", 255, 221, 53, "tile"], ["🌟", 255, 205, 48, "object"], ["🌻", 238, 192, 40, "nature"], ["🍋", 226, 226, 54, "nature"],
+  ["🟩", 48, 164, 75, "tile"], ["🟢", 45, 177, 77, "tile"], ["🟢", 23, 112, 57, "tile"], ["🍀", 57, 155, 75, "nature"], ["🌿", 65, 139, 77, "nature"],
+  ["🌲", 35, 104, 67, "nature"], ["🌳", 52, 133, 75, "nature"], ["🍃", 112, 181, 79, "nature"], ["🥝", 112, 151, 67, "nature"], ["🥑", 112, 139, 65, "nature"],
+  ["🟦", 43, 105, 219, "tile"], ["🔵", 43, 116, 226, "tile"], ["🔷", 53, 160, 229, "tile"], ["🩵", 113, 207, 226, "tile"], ["💎", 75, 187, 218, "object"],
+  ["🌊", 35, 131, 190, "nature"], ["🫐", 53, 81, 161, "nature"], ["🐬", 85, 177, 204, "nature"], ["🧊", 169, 218, 235, "object"], ["☁️", 225, 231, 239, "weather"],
+  ["🟪", 139, 75, 190, "tile"], ["🟣", 157, 83, 201, "tile"], ["🟣", 94, 54, 145, "tile"], ["🍇", 112, 62, 147, "nature"], ["🌺", 207, 66, 147, "nature"],
+  ["🩷", 245, 151, 183, "tile"], ["🌸", 238, 159, 184, "nature"], ["🌷", 218, 82, 130, "nature"], ["🍓", 218, 56, 86, "nature"], ["🪷", 229, 153, 188, "nature"],
+  ["🟫", 133, 82, 49, "tile"], ["🟤", 139, 83, 47, "tile"], ["🟤", 91, 56, 39, "tile"], ["🪵", 155, 108, 71, "object"], ["🍂", 183, 106, 44, "nature"],
+  ["🏜️", 211, 169, 112, "nature"], ["🐚", 225, 190, 163, "nature"], ["🪨", 117, 119, 119, "object"], ["⛰️", 125, 133, 145, "nature"], ["🏔️", 202, 210, 218, "nature"],
+  ["🌋", 106, 67, 57, "nature"], ["🔥", 237, 104, 33, "nature"], ["☀️", 255, 213, 64, "weather"], ["🌙", 205, 205, 225, "weather"], ["⭐", 255, 224, 105, "weather"],
+  ["❄️", 190, 221, 242, "weather"], ["🌧️", 92, 130, 171, "weather"], ["🌈", 188, 119, 177, "weather"], ["🌾", 190, 169, 96, "nature"], ["🌵", 75, 133, 91, "nature"],
+  ["🌼", 244, 211, 80, "nature"], ["🌹", 181, 50, 68, "nature"], ["🌻", 241, 194, 54, "nature"], ["🍁", 203, 94, 38, "nature"], ["🍄", 189, 77, 61, "nature"],
+  ["🐠", 238, 145, 57, "nature"], ["🐟", 81, 143, 176, "nature"], ["🦋", 76, 133, 204, "nature"], ["🪸", 222, 113, 111, "nature"], ["🪻", 131, 111, 186, "nature"],
+  ["🥦", 68, 129, 71, "nature"], ["🍉", 202, 70, 89, "nature"], ["🍒", 172, 36, 53, "nature"], ["🍑", 236, 151, 112, "nature"], ["🥭", 236, 157, 58, "nature"],
+  ["🥬", 107, 157, 82, "nature"], ["🌽", 229, 190, 68, "nature"], ["🍆", 98, 69, 126, "nature"], ["🪴", 81, 130, 83, "nature"], ["🪺", 155, 113, 75, "nature"]
+];
+
+const TILE = COLORS.filter(c => c[4] === "tile");
+const ILLUSTRATED = COLORS.filter(c => c[4] !== "tile");
+const PALETTES = {
+  full: COLORS,
+  nature: COLORS.filter(c => ["nature", "weather", "object"].includes(c[4]) || c[4] === "tile"),
+  vivid: COLORS.filter(c => c[4] === "tile" || ["nature", "object"].includes(c[4])).filter(c => c[1] > 35 && c[1] < 255),
+  warm: COLORS.filter(c => c[4] === "tile" || c[1] >= c[2] * .86 && c[1] >= c[3] * .82),
+  cool: COLORS.filter(c => c[4] === "tile" || c[2] >= c[1] * .78 || c[3] >= c[1] * .72),
+  mono: [
+    ["⬛", 20,20,24,"tile"], ["◼️", 65,65,70,"tile"], ["🩶", 112,114,118,"tile"],
+    ["🪨", 145,147,150,"object"], ["☁️", 190,194,199,"weather"], ["⬜", 246,246,246,"tile"]
+  ]
+};
+const labCache = new Map();
+const $range = (id, valueId, format = v => `${v}%`) => {
+  $(id).addEventListener("input", () => { $(valueId).textContent = format($(id).value); scheduleGenerate(); });
+};
+
+function linearize(v) { v /= 255; return v <= .04045 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }
+function rgbToLab(r, g, b) {
+  r = linearize(r); g = linearize(g); b = linearize(b);
+  let x = (r*.4124 + g*.3576 + b*.1805) / .95047;
+  let y = r*.2126 + g*.7152 + b*.0722;
+  let z = (r*.0193 + g*.1192 + b*.9505) / 1.08883;
+  const f = t => t > .008856 ? Math.cbrt(t) : 7.787*t + 16/116;
+  x = f(x); y = f(y); z = f(z);
+  return [116*y-16, 500*(x-y), 200*(y-z)];
+}
+function labDistance(a, b) {
+  // Slightly favor lightness accuracy while retaining hue and saturation separation.
+  return 1.15*(a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2;
+}
+function getActivePalette() {
+  const base = PALETTES[$("palette").value] || COLORS;
+  const style = $("style").value;
+  const selected = style === "tiles" ? base.filter(c => c[4] === "tile")
+    : style === "illustrated" ? base.filter(c => c[4] !== "tile") : base;
+  const safeSelected = selected.length >= 3 ? selected : base;
+  const key = `${$("palette").value}-${style}`;
+  if (!labCache.has(key)) labCache.set(key, safeSelected.map(c => ({ emoji: c[0], rgb: c.slice(1,4), lab: rgbToLab(c[1],c[2],c[3]) })));
+  return labCache.get(key);
+}
+function nearestColorLab(lab, palette) {
+  let best = palette[0], bestDistance = Infinity;
+  for (const color of palette) {
+    const distance = labDistance(lab, color.lab);
+    if (distance < bestDistance) { bestDistance = distance; best = color; }
+  }
+  return best;
+}
+function nearestColorRgb(r,g,b,palette) { return nearestColorLab(rgbToLab(r,g,b), palette); }
+function clamp(v, min=0, max=255) { return Math.max(min, Math.min(max, v)); }
+
+function transformImageData(data, w, h) {
+  const brightness = Number($("brightness").value);
+  const contrast = Number($("contrast").value) / 100;
+  const saturation = Number($("saturation").value) / 100;
+  const factor = contrast;
+  const out = new Uint8ClampedArray(data.length);
+  for (let i = 0; i < data.length; i += 4) {
+    let r = data[i], g = data[i+1], b = data[i+2];
+    const gray = .2126*r + .7152*g + .0722*b;
+    r = gray + (r-gray)*saturation; g = gray + (g-gray)*saturation; b = gray + (b-gray)*saturation;
+    r = factor*(r-128)+128+brightness; g = factor*(g-128)+128+brightness; b = factor*(b-128)+128+brightness;
+    out[i] = clamp(r); out[i+1] = clamp(g); out[i+2] = clamp(b); out[i+3] = data[i+3];
+  }
+  return out;
+}
+function sharpenData(data, w, h, amount) {
+  if (amount <= .01) return data;
+  const out = new Uint8ClampedArray(data);
+  for (let y=1; y<h-1; y++) for (let x=1; x<w-1; x++) {
+    const i=(y*w+x)*4;
+    for (let c=0;c<3;c++) {
+      let sum=0;
+      for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) sum += data[((y+dy)*w+x+dx)*4+c];
+      const blur=sum/9;
+      out[i+c]=clamp(data[i+c]+(data[i+c]-blur)*amount);
+    }
+  }
+  return out;
+}
+function mapPixels(data,w,h,palette,blendMode,blendStrength) {
+  const grid = Array.from({length:h},()=>Array(w));
+  const strength = blendStrength / 100;
+  if (blendMode === "fs" && strength > 0) {
+    const work = new Float32Array(w*h*3);
+    for (let i=0;i<w*h;i++) {
+      const p=i*4, q=i*3;
+      work[q]=data[p]; work[q+1]=data[p+1]; work[q+2]=data[p+2];
+    }
+    const spread=(x,y,er,eg,eb,weight)=>{
+      if(x<0||x>=w||y<0||y>=h)return;
+      const q=(y*w+x)*3;
+      work[q]+=er*weight*strength; work[q+1]+=eg*weight*strength; work[q+2]+=eb*weight*strength;
+    };
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++) {
+      const q=(y*w+x)*3;
+      const old=[clamp(work[q]),clamp(work[q+1]),clamp(work[q+2])];
+      const chosen=nearestColorRgb(old[0],old[1],old[2],palette);
+      grid[y][x]=chosen;
+      const er=old[0]-chosen.rgb[0], eg=old[1]-chosen.rgb[1], eb=old[2]-chosen.rgb[2];
+      spread(x+1,y,er,eg,eb,7/16); spread(x-1,y+1,er,eg,eb,3/16);
+      spread(x,y+1,er,eg,eb,5/16); spread(x+1,y+1,er,eg,eb,1/16);
+    }
+    return grid;
+  }
+  const bayer = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++) {
+    const i=(y*w+x)*4;
+    let r=data[i],g=data[i+1],b=data[i+2];
+    if(blendMode === "ordered" && strength > 0) {
+      const n=(bayer[y%4][x%4]-7.5)*strength*2.2;
+      r=clamp(r+n); g=clamp(g+n); b=clamp(b+n);
+    }
+    grid[y][x]=nearestColorRgb(r,g,b,palette);
+  }
+  return grid;
+}
+function cleanupGrid(grid, palette, amount, detail) {
+  if(amount<=0) return grid;
+  const h=grid.length,w=grid[0].length;
+  const next=grid.map(row=>row.slice());
+  // Only repair isolated, low-contrast noise. Strongly different one-pixel features are kept.
+  const maxVotes = amount > 70 ? 7 : amount > 35 ? 7 : 8;
+  const colorLimit = 7 + amount*.24 + detail*.08;
+  for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++) {
+    const current=grid[y][x], counts=new Map();
+    for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++) {
+      if(dx===0&&dy===0)continue;
+      const emoji=grid[y+dy][x+dx]; counts.set(emoji,(counts.get(emoji)||0)+1);
+    }
+    let majority=current,votes=0;
+    for(const [emoji,count] of counts) if(count>votes){majority=emoji;votes=count;}
+    if(majority===current || votes<maxVotes) continue;
+    const a=current.lab,b=majority.lab;
+    if(a&&b&&Math.sqrt(labDistance(a,b))<=colorLimit) next[y][x]=majority;
+  }
+  return next;
+}
+function updateHeight() {
+  if(!sourceImage || !$('proportions').checked)return;
+  const w=Number($('width').value);
+  const h=clamp(Math.round(w*sourceImage.naturalHeight/sourceImage.naturalWidth),8,100);
+  $('height').value=h; $('heightValue').textContent=h;
+}
+function drawSourcePreview(url) {
+  $('sourcePreview').src=url; $('sourcePreview').hidden=false;
+  $('fileMeta').textContent=`${sourceImage.naturalWidth} × ${sourceImage.naturalHeight} px`;
+}
+function loadFile(file) {
+  if(!file || !file.type.startsWith('image/')) { setState('Please choose a valid image file'); return; }
+  if(sourceUrl) URL.revokeObjectURL(sourceUrl);
+  sourceUrl=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=()=>{
+    sourceImage=img; drawSourcePreview(sourceUrl); $('clear').disabled=false; $('generate').disabled=false;
+    updateHeight(); generate();
+  };
+  img.onerror=()=>setState('This image could not be opened');
+  img.src=sourceUrl;
+}
+function setState(message){ $('resultState').textContent=message; }
+function generate() {
+  if(!sourceImage || busy)return;
+  busy=true; setState('Generating…'); $('generate').disabled=true;
+  // Yield one frame so the UI can display its working state before processing.
+  requestAnimationFrame(()=>{
+    try {
+      const w=Number($('width').value), h=Number($('height').value);
+      const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});
+      canvas.width=w; canvas.height=h;
+      ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h);
+      ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
+      ctx.drawImage(sourceImage,0,0,w,h);
+      let data=transformImageData(ctx.getImageData(0,0,w,h).data,w,h);
+      const detail=Number($('detail').value);
+      data=sharpenData(data,w,h,(detail/100)*.72);
+      const palette=getActivePalette();
+      let grid=mapPixels(data,w,h,palette,$('dither').value,Number($('blend').value));
+      grid=cleanupGrid(grid,palette,Number($('cleanup').value),detail);
+      outputGrid=grid; outputPalette=palette;
+      output=grid.map(row=>row.map(c=>c.emoji).join('')).join('\n');
+      $('preview').className=''; $('preview').textContent=output;
+      const used=new Set(grid.flat().map(c=>c.emoji));
+      $('stats').innerHTML=`<strong>${w} × ${h}</strong> pixels · <strong>${w*h}</strong> emoji cells · ${$('dither').selectedOptions[0].text.split(' · ')[0]}`;
+      $('colorStats').textContent=`${used.size} colors used`;
+      $('copy').disabled=false; $('downloadTxt').disabled=false; $('downloadPng').disabled=false;
+      setState('Artwork ready');
+    } catch(error) {
+      console.error(error); setState('Something went wrong — try a smaller canvas');
+    } finally { busy=false; $('generate').disabled=!sourceImage; }
+  });
+}
+let generateTimer=null;
+function scheduleGenerate(){
+  if(!$('autoGenerate').checked || !sourceImage)return;
+  clearTimeout(generateTimer); generateTimer=setTimeout(generate,180);
+}
+function resetSettings(){
+  $('width').value=40; $('height').value=40; $('proportions').checked=true;
+  $('palette').value='full'; $('style').value='mixed'; $('detail').value=75; $('cleanup').value=35;
+  $('dither').value='none'; $('blend').value=35; $('brightness').value=0; $('contrast').value=100; $('saturation').value=100;
+  $('widthValue').textContent='40'; $('heightValue').textContent='40'; $('detailValue').textContent='75%'; $('cleanupValue').textContent='35%';
+  $('blendValue').textContent='35%'; $('brightnessValue').textContent='0'; $('contrastValue').textContent='100%'; $('saturationValue').textContent='100%';
+  if(sourceImage) updateHeight(); scheduleGenerate();
+}
+function removeImage(){
+  sourceImage=null; output=''; outputGrid=[];
+  if(sourceUrl){URL.revokeObjectURL(sourceUrl);sourceUrl=null;}
+  $('file').value=''; $('sourcePreview').hidden=true; $('sourcePreview').removeAttribute('src'); $('fileMeta').textContent='';
+  $('preview').className='empty-state'; $('preview').innerHTML='<div class="big">🧩</div><strong>Your canvas is ready</strong><span>Upload an image or try the demo to create your first emoji pixel artwork.</span>';
+  $('stats').textContent='No artwork generated yet'; $('colorStats').textContent=''; setState('Waiting for an image');
+  $('copy').disabled=true; $('downloadTxt').disabled=true; $('downloadPng').disabled=true; $('generate').disabled=true; $('clear').disabled=true;
+}
+function makeDemoImage(){
+  const c=document.createElement('canvas'); c.width=640;c.height=420;
+  const ctx=c.getContext('2d');
+  const sky=ctx.createLinearGradient(0,0,0,420); sky.addColorStop(0,'#4b83c8'); sky.addColorStop(.62,'#b1d8df'); sky.addColorStop(1,'#e9bd80');
+  ctx.fillStyle=sky;ctx.fillRect(0,0,640,420);
+  ctx.fillStyle='#f8d56a';ctx.beginPath();ctx.arc(500,92,43,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,.75)';
+  [[115,92,55],[165,90,42],[205,102,48],[375,62,43],[414,62,48]].forEach(([x,y,r])=>{ctx.beginPath();ctx.arc(x,y,r*.55,0,Math.PI*2);ctx.fill();});
+  ctx.fillStyle='#647f9b';ctx.beginPath();ctx.moveTo(0,285);ctx.lineTo(150,125);ctx.lineTo(250,260);ctx.lineTo(350,145);ctx.lineTo(510,300);ctx.lineTo(640,195);ctx.lineTo(640,420);ctx.lineTo(0,420);ctx.fill();
+  ctx.fillStyle='#e3e9e8';ctx.beginPath();ctx.moveTo(108,170);ctx.lineTo(150,125);ctx.lineTo(190,180);ctx.lineTo(166,166);ctx.lineTo(151,178);ctx.lineTo(137,162);ctx.fill();
+  ctx.fillStyle='#426d4e';ctx.beginPath();ctx.moveTo(0,302);ctx.quadraticCurveTo(160,238,315,310);ctx.quadraticCurveTo(480,250,640,310);ctx.lineTo(640,420);ctx.lineTo(0,420);ctx.fill();
+  ctx.fillStyle='#2d84a4';ctx.beginPath();ctx.moveTo(0,350);ctx.quadraticCurveTo(160,325,320,360);ctx.quadraticCurveTo(500,390,640,345);ctx.lineTo(640,420);ctx.lineTo(0,420);ctx.fill();
+  ctx.strokeStyle='rgba(221,245,242,.7)';ctx.lineWidth=5;
+  for(let i=0;i<6;i++){ctx.beginPath();ctx.moveTo(40+i*105,370+(i%2)*15);ctx.quadraticCurveTo(85+i*94,355+(i%2)*15,120+i*90,373+(i%2)*15);ctx.stroke();}
+  ctx.fillStyle='#254c37';
+  for(let i=0;i<9;i++){const x=28+i*73,y=305+(i%3)*14;ctx.beginPath();ctx.moveTo(x,y-45);ctx.lineTo(x-27,y+15);ctx.lineTo(x+27,y+15);ctx.closePath();ctx.fill();ctx.fillRect(x-4,y+12,8,25);}
+  const img=new Image(); img.onload=()=>{sourceImage=img; if(sourceUrl)URL.revokeObjectURL(sourceUrl);sourceUrl=c.toDataURL();drawSourcePreview(sourceUrl);$('fileMeta').textContent='Demo landscape · 640 × 420 px';$('clear').disabled=false;$('generate').disabled=false;updateHeight();generate();};img.src=c.toDataURL('image/png');
+}
+function downloadBlob(blob, filename){const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+async function copyOutput(){
+  if(!output)return;
+  try { await navigator.clipboard.writeText(output); $('copy').textContent='Copied!'; setTimeout(()=>$('copy').textContent='Copy Emoji Art',1300); }
+  catch { const area=document.createElement('textarea');area.value=output;document.body.appendChild(area);area.select();try{document.execCommand('copy');$('copy').textContent='Copied!';setTimeout(()=>$('copy').textContent='Copy Emoji Art',1300);}catch{alert('Copy failed. Select and copy the preview manually.');}area.remove(); }
+}
+function downloadPng(){
+  if(!outputGrid.length)return;
+  const cell=36,w=outputGrid[0].length,h=outputGrid.length;
+  const canvas=document.createElement('canvas');canvas.width=w*cell;canvas.height=h*cell;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.font=`${cell*.82}px "Apple Color Emoji", "Noto Color Emoji", "Segoe UI Emoji", sans-serif`;
+  outputGrid.forEach((row,y)=>row.forEach((item,x)=>ctx.fillText(item.emoji,(x+.5)*cell,(y+.82)*cell)));
+  canvas.toBlob(blob=>{if(blob)downloadBlob(blob,'javas-emoji-pixel-art.png');else alert('PNG export is not supported in this browser.');},'image/png');
+}
+
+$('dropzone').addEventListener('click',()=> $('file').click());
+$('dropzone').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('file').click();}});
+$('dropzone').addEventListener('dragover',e=>{e.preventDefault();$('dropzone').classList.add('drag');});
+$('dropzone').addEventListener('dragleave',()=> $('dropzone').classList.remove('drag'));
+$('dropzone').addEventListener('drop',e=>{e.preventDefault();$('dropzone').classList.remove('drag');loadFile(e.dataTransfer.files[0]);});
+$('file').addEventListener('change',e=>loadFile(e.target.files[0]));
+$('width').addEventListener('input',()=>{$('widthValue').textContent=$('width').value;updateHeight();scheduleGenerate();});
+$('height').addEventListener('input',()=>{$('heightValue').textContent=$('height').value;if($('proportions').checked)$('proportions').checked=false;scheduleGenerate();});
+$('proportions').addEventListener('change',()=>{updateHeight();scheduleGenerate();});
+$('detail').addEventListener('input',()=>{$('detailValue').textContent=$('detail').value+'%';scheduleGenerate();});
+$('cleanup').addEventListener('input',()=>{$('cleanupValue').textContent=$('cleanup').value+'%';scheduleGenerate();});
+$('blend').addEventListener('input',()=>{$('blendValue').textContent=$('blend').value+'%';scheduleGenerate();});
+$('brightness').addEventListener('input',()=>{$('brightnessValue').textContent=Number($('brightness').value)>0?'+'+$('brightness').value:$('brightness').value;scheduleGenerate();});
+$('contrast').addEventListener('input',()=>{$('contrastValue').textContent=$('contrast').value+'%';scheduleGenerate();});
+$('saturation').addEventListener('input',()=>{$('saturationValue').textContent=$('saturation').value+'%';scheduleGenerate();});
+['palette','style','dither'].forEach(id=>$(id).addEventListener('change',scheduleGenerate));
+$('generate').addEventListener('click',generate);
+$('copy').addEventListener('click',copyOutput);
+$('downloadTxt').addEventListener('click',()=>output&&downloadBlob(new Blob([output],{type:'text/plain;charset=utf-8'}),'javas-emoji-pixel-art.txt'));
+$('downloadPng').addEventListener('click',downloadPng);
+$('demo').addEventListener('click',makeDemoImage);
+$('clear').addEventListener('click',removeImage);
+$('reset').addEventListener('click',resetSettings);
+
+// Initial numeric labels.
+$('widthValue').textContent=$('width').value;
+$('heightValue').textContent=$('height').value;
+</script>
+</body>
+</html>
